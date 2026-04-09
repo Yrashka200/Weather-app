@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather App</title>
+
+    <script src="eel.js"></script>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="page-shell">
+        <div class="weather-card">
+            <div class="weather-header">
+                <div class="weather-intro">
+                    <p class="eyebrow">WEATHER FORECAST</p>
+                    <h1>Real‑time<br>Weather Checker</h1>
+                    <p class="subtitle">Get current temperature, humidity, wind speed and conditions for any city worldwide.</p>
+                </div>
+                <div class="search-panel">
+                    <label>📍 Check weather now</label>
+                    <div class="form-row">
+                        <input type="text" id="cityInput" placeholder="City Name, e.g., Kyiv, London, Tokyo">
+                        <button id="searchButton" onclick="getWeather()">Get Weather</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="weatherResult" class="weather-result hidden">
+                <div class="weather-summary">
+                    <div>
+                        <h2 class="result-city" id="cityName">--</h2>
+                        <div class="result-condition">
+                            <span id="weatherIcon" class="weather-icon">🌡️</span>
+                            <span id="condition">--</span>
+                        </div>
+                    </div>
+                    <div class="result-temperature" id="temperature">--</div>
+                </div>
+                <div class="weather-details">
+                    <div>
+                        <span>💧 Humidity</span>
+                        <strong id="humidity">--</strong>
+                    </div>
+                    <div>
+                        <span>🌬️ Wind</span>
+                        <strong id="wind">--</strong>
+                    </div>
+                    <div>
+                        <span>🌡️ Feels like</span>
+                        <strong id="feelsLike">--</strong>
+                    </div>
+                    <div>
+                        <span>📡 Status</span>
+                        <strong id="status">Live</strong>
+                    </div>
+                </div>
+            </div>
+
+            <div id="errorMessage" class="error-message hidden"></div>
+        </div>
+    </div>
+
+    <script>
+        async function getWeather() {
+            const cityInput = document.getElementById('cityInput');
+            const city = cityInput.value.trim();
+            
+            if (!city) {
+                showError('Please enter a city name');
+                return;
+            }
+            
+            // Show loading state
+            const resultDiv = document.getElementById('weatherResult');
+            const errorDiv = document.getElementById('errorMessage');
+            resultDiv.classList.add('hidden');
+            errorDiv.classList.add('hidden');
+            
+            try {
+                const response = await eel.get_weather(city)();
+                const data = JSON.parse(response);
+                
+                if (data.error) {
+                    showError(data.error);
+                } else {
+                    displayWeather(data);
+                }
+            } catch (error) {
+                showError('Failed to fetch weather data. Please try again.');
+                console.error('Error:', error);
+            }
+        }
+        
+        function displayWeather(data) {
+            document.getElementById('cityName').textContent = data.city;
+            document.getElementById('temperature').textContent = data.temperature;
+            document.getElementById('humidity').textContent = data.humidity;
+            document.getElementById('wind').textContent = data.wind;
+            document.getElementById('feelsLike').textContent = data.feels_like;
+            document.getElementById('condition').textContent = data.description;
+            document.getElementById('weatherIcon').textContent = data.icon;
+            document.getElementById('status').textContent = 'Live';
+            
+            // Optional: Change temperature color based on value
+            const tempValue = data.temp_value;
+            const tempElement = document.getElementById('temperature');
+            if (tempValue <= 0) {
+                tempElement.style.color = '#89cff0';
+            } else if (tempValue >= 30) {
+                tempElement.style.color = '#ffaa66';
+            } else {
+                tempElement.style.color = '#f8fafc';
+            }
+            
+            const resultDiv = document.getElementById('weatherResult');
+            resultDiv.classList.remove('hidden');
+            
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.classList.add('hidden');
+        }
+        
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = message;
+            errorDiv.classList.remove('hidden');
+            
+            const resultDiv = document.getElementById('weatherResult');
+            resultDiv.classList.add('hidden');
+        }
+        
+        // Allow Enter key to search
+        document.getElementById('cityInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                getWeather();
+            }
+        });
+        
+        // Load default weather for Kyiv on startup
+        window.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('cityInput').value = 'Kyiv';
+            getWeather();
+        });
+    </script>
+</body>
+</html>
